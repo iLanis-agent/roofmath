@@ -1,0 +1,37 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Roofmath - the roofing order without the supplier's rounding</title>
+<style>
+:root{--bg:#141114;--card:#1e1a1e;--ink:#f2e9ee;--mut:#b3a2ac;--amber:#e87f4b;--line:#3a2f36}
+*{box-sizing:border-box;margin:0}
+body{background:var(--bg);color:var(--ink);font:17px/1.55 system-ui,-apple-system,"Segoe UI",sans-serif;padding:40px 20px}
+main{max-width:760px;margin:0 auto}
+h1{font-size:44px;letter-spacing:-.5px}h1 span{color:var(--amber)}
+p.lede{color:var(--mut);font-size:19px;margin:18px 0 26px}
+a.btn{display:inline-block;background:var(--amber);color:#241109;font-weight:700;padding:13px 26px;border-radius:10px;text-decoration:none;font-size:18px}
+ul{margin:34px 0;list-style:none;padding:0}
+li{background:var(--card);border:1px solid var(--line);border-radius:12px;padding:14px 18px;margin-bottom:10px}
+li b{color:var(--amber)}
+small{display:block;color:var(--mut);margin-top:36px;font-size:14px}
+</style>
+</head>
+<body>
+<main>
+<h1>Roof<span>math</span></h1>
+<p class="lede">A 6/12 roof over a 40 by 24 footprint is not 960 square feet - it is 1,073, and the supplier's estimator will not mention that the waste percentage is doing quiet work for their margin. Roofmath shows the real geometry, the honest waste choices, and every accessory line the big estimate folds invisibly into "materials."</p>
+<a class="btn" href="app.html">Size my roof</a>
+<ul>
+<li><b>Exact slope geometry</b> - the slope factor is just Pythagoras: sqrt(1 + (rise/12)^2). A 12/12 roof is 41.4% bigger than its footprint, and now you can prove it.</li>
+<li><b>Overhangs counted</b> - eaves and rakes extend the plan. Half a foot of overhang on a family house is a couple of bundles.</li>
+<li><b>Honest waste</b> - 10% simple gable, 15% hip, 20% cut-up, shown as a choice you make instead of a number you inherit.</li>
+<li><b>Every accessory line</b> - starter, ridge and hip cap, underlayment, drip edge, and the 320-nails-per-square truth, each with its rule of thumb labeled.</li>
+<li><b>Pitch verdicts</b> - under 2/12 needs membrane, under 4/12 commonly needs double underlayment, steep means slower work. Labeled, not hidden.</li>
+<li><b>Gable or hip</b> - rake and hip lengths computed from the real geometry, including the 45-degree hip diagonal.</li>
+</ul>
+<small>Runs entirely in your browser. Sloped-area geometry is exact for uniform pitch; bundles per square (3), waste percentages, starter (~100 lin ft/bundle), cap (~33 lin ft/bundle), nails per square (320 / 480 high-wind) and drip lengths (10 ft) are commonly published rules of thumb - your product's data sheet wins every tie.</small>
+</main>
+</body>
+</html>

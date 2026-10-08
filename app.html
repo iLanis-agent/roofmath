@@ -1,0 +1,161 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Roofmath - honest roofing materials</title>
+<style>
+:root{--bg:#141114;--card:#1e1a1e;--ink:#f2e9ee;--mut:#b3a2ac;--amber:#e87f4b;--line:#3a2f36;--ok:#4ade80;--warn:#fbbf24;--bad:#f87171}
+*{box-sizing:border-box;margin:0}
+body{background:var(--bg);color:var(--ink);font:16px/1.5 system-ui,-apple-system,"Segoe UI",sans-serif;padding:26px 14px 60px}
+main{max-width:860px;margin:0 auto}
+a.back{color:var(--mut);text-decoration:none;font-size:14px}
+h1{font-size:30px;margin:6px 0 2px}h1 span{color:var(--amber)}
+.sub{color:var(--mut);margin-bottom:20px}
+.card{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:18px;margin-bottom:16px}
+.card h2{font-size:19px;margin-bottom:12px}
+.grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(140px,1fr));gap:12px}
+label{display:block;color:var(--mut);font-size:13px;margin-bottom:4px}
+input,select{width:100%;background:#171214;border:1px solid var(--line);color:var(--ink);border-radius:8px;padding:9px 10px;font-size:16px}
+button.ghost{background:#2a2128;border:1px solid var(--line);color:var(--ink);border-radius:8px;padding:8px 12px;font-size:14px;cursor:pointer;margin:10px 6px 0 0}
+button.ghost:hover{border-color:var(--amber)}
+.verdicts{display:grid;grid-template-columns:repeat(auto-fit,minmax(160px,1fr));gap:12px;margin-top:12px}
+.vc{background:#171214;border:1px solid var(--line);border-radius:10px;padding:12px 14px}
+.vc .k{color:var(--mut);font-size:12px;letter-spacing:1px}
+.vc .n{font-size:24px;font-weight:700;margin:4px 0}
+.vc .h{color:var(--mut);font-size:13px}
+.vc.ok .n{color:var(--ok)}.vc.warn .n{color:var(--warn)}.vc.bad .n{color:var(--bad)}
+table{width:100%;border-collapse:collapse;font-size:15px;margin-top:12px}
+td,th{padding:7px 8px;border-bottom:1px solid var(--line);text-align:left}
+td.v{font-weight:700;white-space:nowrap}
+th{color:var(--mut);font-weight:600;font-size:13px}
+.note{color:var(--mut);font-size:13px;margin-top:10px}
+.err{display:none;background:#3a1220;border:1px solid var(--bad);color:#fecaca;border-radius:10px;padding:12px 14px;margin-bottom:14px}
+#roof{width:100%;max-width:380px;display:block;margin:14px auto 0}
+</style>
+</head>
+<body>
+<main>
+<a class="back" href="index.html">&larr; Roofmath</a>
+<h1>Roof<span>math</span></h1>
+<p class="sub">Footprint in, honest order out. Every number updates live.</p>
+
+<div class="err" id="err"></div>
+
+<div class="card">
+<h2>1. Footprint and pitch</h2>
+<div class="grid">
+<div><label>Length - ridge side (ft)</label><input id="L" type="number" step="any" value="40"></div>
+<div><label>Width (ft)</label><input id="W" type="number" step="any" value="24"></div>
+<div><label>Pitch (rise per 12)</label><input id="rise" type="number" step="any" value="6"></div>
+<div><label>Roof type</label><select id="type">
+<option value="gable" selected>Gable</option>
+<option value="hip">Hip</option>
+</select></div>
+<div><label>Eave overhang (ft)</label><input id="oe" type="number" step="any" value="1"></div>
+<div><label>Rake overhang (ft)</label><input id="ora" type="number" step="any" value="0.5"></div>
+</div>
+<button class="ghost" data-r="4">4/12</button>
+<button class="ghost" data-r="6">6/12</button>
+<button class="ghost" data-r="8">8/12</button>
+<button class="ghost" data-r="12">12/12</button>
+<svg id="roof" viewBox="0 0 380 170" aria-label="roof cross-section"></svg>
+<div class="verdicts" id="geom"></div>
+<p class="note" id="geomnote"></p>
+</div>
+
+<div class="card">
+<h2>2. Shingles</h2>
+<div class="grid">
+<div><label>Complexity (waste)</label><select id="waste">
+<option value="10">Simple gable - 10% (rule of thumb)</option>
+<option value="15" selected>Hip roof - 15% (rule of thumb)</option>
+<option value="20">Cut-up / valleys / dormers - 20%</option>
+<option value="5">I measured everything - 5%</option>
+</select></div>
+</div>
+<div class="verdicts" id="shingles"></div>
+<p class="note" id="bundnote"></p>
+</div>
+
+<div class="card">
+<h2>3. Accessories</h2>
+<div class="grid">
+<div><label>Underlayment coverage per roll (sq ft)</label><input id="cov" type="number" step="any" value="400"></div>
+<div><label>Nailing</label><select id="wind">
+<option value="no" selected>Standard 4-nail (~320/square)</option>
+<option value="yes">High-wind 6-nail (~480/square)</option>
+</select></div>
+</div>
+<table id="acc"></table>
+<p class="note" id="accnote"></p>
+</div>
+</main>
+<script src="engine.js"></script>
+<script>
+const $=id=>document.getElementById(id);
+const fmt=(v,d=1)=>v.toLocaleString('en-US',{maximumFractionDigits:d,minimumFractionDigits:d});
+function vc(k,n,h,cls){return `<div class="vc${cls?' '+cls:''}"><div class="k">${k}</div><div class="n">${n}</div><div class="h">${h||''}</div></div>`}
+function num(id){const v=parseFloat($(id).value);return isFinite(v)?v:NaN;}
+function showErr(m){const e=$('err');e.textContent=m;e.style.display='block';}
+function hideErr(){$('err').style.display='none';}
+function drawRoof(rise,type){
+ const cx=190,base=120,hw=150;
+ const h=Math.min(90,hw*(rise/12));
+ let s='';
+ if(type==='gable'){
+   s+=`<polygon points="${cx-hw},${base} ${cx},${base-h} ${cx+hw},${base}" fill="#2a2128" stroke="#e87f4b" stroke-width="2.5"/>`;
+   s+=`<line x1="${cx}" y1="${base}" x2="${cx}" y2="${base-h}" stroke="#b3a2ac" stroke-dasharray="4" stroke-width="1.5"/>`;
+   s+=`<text x="${cx+8}" y="${base-h/2}" fill="#b3a2ac" font-size="12">rise ${rise}</text>`;
+   s+=`<line x1="${cx}" y1="${base+16}" x2="${cx+hw}" y2="${base+16}" stroke="#b3a2ac" stroke-width="1.5"/>`;
+   s+=`<text x="${cx+hw/2-14}" y="${base+32}" fill="#b3a2ac" font-size="12">run 12</text>`;
+ } else {
+   s+=`<polygon points="${cx-hw},${base} ${cx-40},${base-h} ${cx+40},${base-h} ${cx+hw},${base}" fill="#2a2128" stroke="#e87f4b" stroke-width="2.5"/>`;
+   s+=`<line x1="${cx-40}" y1="${base-h}" x2="${cx-hw}" y2="${base}" stroke="#e87f4b" stroke-width="2.5"/>`;
+   s+=`<text x="${cx-70}" y="${base-h-8}" fill="#b3a2ac" font-size="12">ridge</text>`;
+   s+=`<text x="${cx-hw+6}" y="${base-h/2}" fill="#b3a2ac" font-size="12">hips 45&deg;</text>`;
+ }
+ s+=`<text x="${cx}" y="${base+52}" fill="#b3a2ac" font-size="12" text-anchor="middle">${type==='gable'?'gable cross-section':'hip plan-side view'} - pitch ${rise}/12</text>`;
+ $('roof').innerHTML=s;
+}
+function run(){
+ hideErr();
+ const L=num('L'),W=num('W'),rise=num('rise'),type=$('type').value,oe=num('oe'),ora=num('ora');
+ const s=engine.slopeInfo(rise);
+ if(s.error){showErr(s.error);return;}
+ const a=engine.roofArea(L,W,rise,type,oe,ora);
+ if(a.error){showErr(a.error);return;}
+ const e=engine.edges(L,W,rise,type,oe,ora);
+ if(e.error){showErr(e.error);return;}
+ drawRoof(rise,type);
+ $('geom').innerHTML=
+  vc('SLOPE FACTOR','x'+fmt(s.factor,4),fmt(s.angleDeg,1)+'&deg; / '+fmt(s.percent,0)+'% slope')
+ +vc('PITCH VERDICT',s.cls==='ok'?'Normal':s.cls==='warn'?'Caution':'Membrane',s.verdict,s.cls)
+ +vc('PLAN AREA',fmt(a.planFt2,0)+' sq ft','footprint + overhangs')
+ +vc('SLOPED AREA',fmt(a.areaFt2,0)+' sq ft',fmt(a.squares,2)+' squares')
+ +vc('SLOPED VS PLAN','+'+fmt((s.factor-1)*100,1)+'%','what the footprint hides');
+ $('geomnote').textContent=a.note;
+ const w=num('waste');
+ const b=engine.bundles(a.areaFt2,w);
+ $('shingles').innerHTML=
+  vc('ORDER AREA',fmt(b.wasteSquares,2)+' squares','sloped area + '+w+'% waste')
+ +vc('FIELD BUNDLES',b.bundles,'at 3 bundles per square')
+ +vc('RIDGE/HIP CAP',Math.ceil(e.capFt/33)+' bundles',fmt(e.capFt,0)+' lin ft at ~33 ft/bundle')
+ +vc('STARTER',Math.ceil(e.starterFt/100)+' bundles',fmt(e.starterFt,0)+' lin ft at ~100 ft/bundle');
+ $('bundnote').textContent=b.note;
+ const acc=engine.accessories(e.eavesFt,e.rakesFt,e.capFt,a.areaFt2,w,num('cov'),$('wind').value==='yes');
+ $('acc').innerHTML=acc.error?`<tr><td colspan="3" class="v">${acc.error}</td></tr>`
+  :'<tr><th>Line</th><th>Quantity</th><th>Basis</th></tr>'
+  +`<tr><td>Underlayment</td><td class="v">${acc.underlaymentRolls} rolls</td><td>${fmt(a.areaFt2,0)} sq ft at your ${fmt(num('cov'),0)} sq ft/roll</td></tr>`
+  +`<tr><td>Drip edge</td><td class="v">${acc.dripPieces} pieces</td><td>${fmt(e.eavesFt+e.rakesFt,0)} lin ft in 10 ft pieces</td></tr>`
+  +`<tr><td>Roofing nails</td><td class="v">${acc.nails.toLocaleString()}</td><td>~${acc.nailsPerSquare} per square on the order area</td></tr>`
+  +`<tr><td>Eaves / rakes</td><td class="v">${fmt(e.eavesFt,0)} / ${fmt(e.rakesFt,0)} ft</td><td>${type==='gable'?'rakes run the full slope, both ends':'hip roof has no rakes'}</td></tr>`
+  +(type==='hip'?`<tr><td>Ridge / hips</td><td class="v">${fmt(e.ridgeFt,0)} / ${fmt(e.hipsFt,0)} ft</td><td>hips on the 45-degree diagonal</td></tr>`:`<tr><td>Ridge</td><td class="v">${fmt(e.ridgeFt,0)} ft</td><td>length + rake overhangs</td></tr>`);
+ $('accnote').textContent=acc.error?'':acc.notes;
+}
+document.querySelectorAll('input,select').forEach(i=>i.addEventListener('input',run));
+document.querySelectorAll('button.ghost').forEach(b=>b.addEventListener('click',()=>{$('rise').value=b.dataset.r;run();}));
+run();
+</script>
+</body>
+</html>
